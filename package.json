@@ -14,28 +14,28 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
-      "commands": [
-        {
-          "command": "extension.addTimestamp",
-          "title": "Add Timestamp Comment"
-        },
-        {
-          "command": "extension.runParser",
-          "title": "Run Project Parser"
-        },
-        {
-          "command": "extension.getByIds",
-          "title": "codeTide: Get by IDs"
-        },
-        {
-          "command": "extension.addIdsToCopilotContext",
-          "title": "codetide: Add IDs to Copilot Context"
-        },
-        {
-          "command": "extension.parseFile",
-          "title": "Parse Current File"
-        }
-      ]
+    "commands": [
+      {
+        "command": "extension.runParser",
+        "title": "CodeTide: Initialize Project"
+      },
+      {
+        "command": "extension.getByIds",
+        "title": "CodeTide: Get by IDs"
+      },
+      {
+        "command": "extension.addIdsToCopilotContext",
+        "title": "CodeTide: Add IDs to Copilot Context"
+      },
+      {
+        "command": "extension.parseFile",
+        "title": "CodeTide: Parse Current File"
+      },
+      {
+        "command": "extension.refreshCachedIds",
+        "title": "CodeTide: Refresh Cached IDs"
+      }
+    ]
   },
   "files": [
     "dist",

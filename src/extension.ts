@@ -42,7 +42,7 @@ function runPythonCommand(
                     if (onResult) {
                         onResult(output);
                     } else if (output.length > 0) {
-                        vscode.window.showInformationMessage(`Python says: ${output}`);
+                        vscode.window.showInformationMessage(`[CodeTide] ${output}`);
                     }
 
                     resolve();
@@ -58,26 +58,6 @@ export function activate(context: vscode.ExtensionContext) {
     // Create fuzzy autocomplete instance
     const fuzzyAutocomplete = new FuzzyAutocomplete();
 
-    // Add timestamp command
-    context.subscriptions.push(vscode.commands.registerCommand('extension.addTimestamp', () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showErrorMessage('No active editor. Open a file to add a timestamp comment.');
-            return;
-        }
-
-        const document = editor.document;
-        const position = new vscode.Position(document.lineCount, 0);
-        const now = new Date();
-        const formattedDateTime = `// Last modified: ${now.toLocaleString()}`;
-
-        editor.edit(editBuilder => {
-            editBuilder.insert(position, `\n${formattedDateTime}`);
-        });
-
-        vscode.window.showInformationMessage('Added timestamp comment.');
-    }));
-
     // Project parser command
     context.subscriptions.push(vscode.commands.registerCommand('extension.runParser', () => {
         const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -86,7 +66,7 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        runPythonCommand('project', [workspacePath]);
+        runPythonCommand('project', [workspacePath], 'CodeTide: Initialize Project');
     }));
 
     // Get by IDs command with fuzzy autocomplete
