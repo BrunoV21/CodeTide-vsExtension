@@ -27,11 +27,12 @@ async def init_project(args, force_build: bool = False, flush: bool = False) -> 
 
 async def handle_get(args):
     tide = await init_project(args)
-    result = tide.codebase.get(args.ids, degree=1, as_string=True)
+    result = tide.codebase.get(args.ids, degree=args.degree, as_string=True)
     if result:
         print(result)
     else:
         print(f"[CodeTide][GET] No matches found for {args.ids}")
+        
 
 async def handle_parse(args):
     tide = await init_project(args)
@@ -49,6 +50,7 @@ async def main():
     parser_get = subparsers.add_parser("get", help="Get one or more items by ID")
     parser_get.add_argument("project_path", help="Path to the current workspace/project")
     parser_get.add_argument("ids", nargs="+", help="List of item IDs to get")
+    parser_get.add_argument("--degree", type=int, default=1, help="Depth of retrieval")
     parser_get.set_defaults(func=handle_get)
 
     parser_parse = subparsers.add_parser("parse", help="Parse a specific file in the project")

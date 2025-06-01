@@ -28,6 +28,14 @@
         "title": "CodeTide: Add IDs to Copilot Context"
       },
       {
+        "command": "extension.getByIdsDeep",
+        "title": "CodeTide: Get by IDs (Deep)"
+      },
+      {
+        "command": "extension.addIdsToCopilotContextDeep",
+        "title": "CodeTide: Add IDs to Copilot Context (Deep)"
+      },
+      {
         "command": "extension.parseFile",
         "title": "CodeTide: Parse Current File"
       },
