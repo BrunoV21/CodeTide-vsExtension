@@ -132,7 +132,7 @@ export class FuzzyAutocomplete {
 
         return new Promise((resolve) => {
             const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem>();
-            quickPick.placeholder = 'Type to search IDs, press Enter to select, use "+" to add more IDs';
+            quickPick.placeholder = 'Type to search IDs, press Enter to select, press Esc to execute';
             quickPick.canSelectMany = false;
             quickPick.matchOnDescription = false;
             quickPick.matchOnDetail = false;
