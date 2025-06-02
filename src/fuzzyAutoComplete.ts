@@ -118,7 +118,7 @@ export class FuzzyAutocomplete {
     }
 
     /**
-     * Show interactive fuzzy ID picker
+     * Show interactive fuzzy ID picker with multi-select support using "+" separator
      */
     public async showFuzzyIdPicker(workspacePath: string): Promise<string[]> {
         // (1) Load IDs if not loaded
@@ -132,14 +132,11 @@ export class FuzzyAutocomplete {
 
         return new Promise((resolve) => {
             const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem>();
-            quickPick.placeholder = 'Type to search IDs, then select from suggestions';
-            quickPick.canSelectMany = false; // ← We’ll assume single‐selection for “fill the input” behavior
+            quickPick.placeholder = 'Type to search IDs, use "+" to add multiple IDs, press Enter to confirm selection';
+            quickPick.canSelectMany = false;
             quickPick.matchOnDescription = false;
             quickPick.matchOnDetail = false;
-            quickPick.title = `Select IDs (${this.cachedIds.length} available) - press Enter to accept`;
-
-            // Keep track of which IDs have been chosen (if you still want multi‐select elsewhere)
-            let selectedId: string | undefined;
+            quickPick.title = `Select IDs (${this.cachedIds.length} available) - Use "+" to separate multiple IDs`;
 
             const updateItems = (suggestions: IdSuggestion[], query: string = ''): vscode.QuickPickItem[] => {
                 return suggestions.map(suggestion => ({
@@ -149,35 +146,118 @@ export class FuzzyAutocomplete {
                 }));
             };
 
+            const getCurrentQuery = (fullInput: string): { prefix: string, currentQuery: string } => {
+                const lastPlusIndex = fullInput.lastIndexOf('+');
+                if (lastPlusIndex === -1) {
+                    return { prefix: '', currentQuery: fullInput.trim() };
+                }
+                
+                const prefix = fullInput.substring(0, lastPlusIndex + 1);
+                const currentQuery = fullInput.substring(lastPlusIndex + 1).trim();
+                return { prefix, currentQuery };
+            };
+
+            const parseSelectedIds = (input: string): string[] => {
+                return input.split('+')
+                    .map(id => id.trim())
+                    .filter(id => id.length > 0);
+            };
+
             // (2) Start with the first 50 IDs unfiltered
             const initialSuggestions = this.cachedIds.slice(0, 50).map(id => ({ id, score: 0, matches: true }));
             quickPick.items = updateItems(initialSuggestions);
 
-            // (3) Whenever the user types, re‐run fuzzy and refresh item list
+            // (3) Whenever the user types, re-run fuzzy and refresh item list
             quickPick.onDidChangeValue((value) => {
-                const query = value.trim();
-                const suggestions = query
-                    ? this.getFuzzySuggestions(query, 50)
+                const { prefix, currentQuery } = getCurrentQuery(value);
+                
+                // Always update suggestions based on the current query (part after last +)
+                const suggestions = currentQuery.length > 0
+                    ? this.getFuzzySuggestions(currentQuery, 50)
                     : this.cachedIds.slice(0, 50).map(id => ({ id, score: 0, matches: true }));
-                quickPick.items = updateItems(suggestions, query);
+                
+                quickPick.items = updateItems(suggestions, currentQuery);
             });
 
-            // (4) When the user moves up/down and selects an item, put it back into the input-box
+            let pendingSelection = false;
+
+            // (4) When the user navigates through items (but hasn't pressed Enter yet)
             quickPick.onDidChangeSelection(selectedItems => {
-                if (selectedItems.length > 0) {
-                    // Just write the first selected label back to the QuickPick's input field
-                    quickPick.value = selectedItems[0].label;
-                    selectedId = selectedItems[0].label;
-                }
+                // Don't automatically add to input on selection change
+                // Wait for user to press Enter to confirm the selection
             });
 
-            // (5) When user presses Enter (accept), resolve with whatever is in the input (or the last‐clicked item)
+            // (5) Handle Enter key press
             quickPick.onDidAccept(() => {
-                const chosen = quickPick.selectedItems[0]?.label;
+                const currentInput = quickPick.value.trim();
+                const selectedItems = quickPick.selectedItems;
+                
+                // Check if user has selected an item from the dropdown
+                if (selectedItems.length > 0) {
+                    const selectedId = selectedItems[0].label;
+                    const { prefix } = getCurrentQuery(currentInput);
+                    
+                    // Add the selected ID to the input with "+" separator
+                    if (prefix) {
+                        quickPick.value = prefix + selectedId + '+';
+                    } else {
+                        quickPick.value = selectedId + '+';
+                    }
+                    
+                    // Clear selection and reset items for next selection
+                    quickPick.selectedItems = [];
+                    
+                    // Force refresh of suggestions for the empty query after the new +
+                    setTimeout(() => {
+                        const suggestions = this.cachedIds.slice(0, 50).map(id => ({ id, score: 0, matches: true }));
+                        quickPick.items = updateItems(suggestions);
+                    }, 10);
+                    
+                    return; // Don't execute command yet, continue selecting
+                }
+                
+                // No item selected from dropdown, check if we should execute the command
+                if (currentInput.endsWith('+')) {
+                    // Input ends with '+', user might want to add more
+                    return;
+                }
+                
+                // Check if the current input (without +) matches an existing ID exactly
+                if (currentInput && this.hasId(currentInput)) {
+                    // Single exact match, execute with this ID
+                    quickPick.hide();
+                    resolve([currentInput]);
+                    return;
+                }
+                
+                // Parse multiple IDs from input
+                const selectedIds = parseSelectedIds(currentInput);
+                
+                if (selectedIds.length === 0) {
+                    vscode.window.showInformationMessage('No IDs selected.');
+                    quickPick.hide();
+                    resolve([]);
+                    return;
+                }
+                
+                // Validate that all selected IDs exist in cache
+                const validIds = selectedIds.filter(id => this.hasId(id));
+                const invalidIds = selectedIds.filter(id => !this.hasId(id));
+                
+                if (invalidIds.length > 0) {
+                    vscode.window.showWarningMessage(`Invalid IDs found: ${invalidIds.join(', ')}`);
+                }
+                
+                if (validIds.length === 0) {
+                    vscode.window.showInformationMessage('No valid IDs selected.');
+                    quickPick.hide();
+                    resolve([]);
+                    return;
+                }
+                
                 quickPick.hide();
-                resolve([chosen]); // if you still want to return something to the caller
+                resolve(validIds);
             });
-
 
             quickPick.onDidHide(() => {
                 resolve([]);
@@ -186,7 +266,6 @@ export class FuzzyAutocomplete {
             quickPick.show();
         });
     }
-
     /**
      * Get the number of cached IDs
      */
