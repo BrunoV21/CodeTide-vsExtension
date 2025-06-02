@@ -118,10 +118,10 @@ export class FuzzyAutocomplete {
     }
 
     /**
-     * Show interactive fuzzy ID picker with multi-select support using "+" separator
+     * Show interactive fuzzy ID picker with improved multi-select support using "+" separator
      */
     public async showFuzzyIdPicker(workspacePath: string): Promise<string[]> {
-        // (1) Load IDs if not loaded
+        // Load IDs if not loaded
         if (this.cachedIds.length === 0) {
             const loaded = this.loadCachedIds(workspacePath);
             if (!loaded || this.cachedIds.length === 0) {
@@ -132,140 +132,161 @@ export class FuzzyAutocomplete {
 
         return new Promise((resolve) => {
             const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem>();
-            quickPick.placeholder = 'Type to search IDs, use "+" to add multiple IDs, press Enter to confirm selection';
+            quickPick.placeholder = 'Type to search IDs, press Enter to select, use "+" to add more IDs';
             quickPick.canSelectMany = false;
             quickPick.matchOnDescription = false;
             quickPick.matchOnDetail = false;
-            quickPick.title = `Select IDs (${this.cachedIds.length} available) - Use "+" to separate multiple IDs`;
+            
+            // Track selected IDs
+            let selectedIds: string[] = [];
+            let isWaitingForSelection = false;
+            
+            const updateTitle = () => {
+                const selectedText = selectedIds.length > 0 ? ` | Selected: ${selectedIds.join(', ')}` : '';
+                quickPick.title = `Select IDs (${this.cachedIds.length} available)${selectedText}`;
+            };
 
             const updateItems = (suggestions: IdSuggestion[], query: string = ''): vscode.QuickPickItem[] => {
                 return suggestions.map(suggestion => ({
                     label: suggestion.id,
                     description: query && suggestion.score > 0 ? `Score: ${suggestion.score}` : '',
-                    detail: ''
+                    detail: selectedIds.includes(suggestion.id) ? '✓ Already selected' : ''
                 }));
             };
 
-            const getCurrentQuery = (fullInput: string): { prefix: string, currentQuery: string } => {
-                const lastPlusIndex = fullInput.lastIndexOf('+');
+            const getCurrentQuery = (): string => {
+                const value = quickPick.value.trim();
+                const lastPlusIndex = value.lastIndexOf('+');
+                
                 if (lastPlusIndex === -1) {
-                    return { prefix: '', currentQuery: fullInput.trim() };
+                    return value;
                 }
                 
-                const prefix = fullInput.substring(0, lastPlusIndex + 1);
-                const currentQuery = fullInput.substring(lastPlusIndex + 1).trim();
-                return { prefix, currentQuery };
+                return value.substring(lastPlusIndex + 1).trim();
             };
 
-            const parseSelectedIds = (input: string): string[] => {
-                return input.split('+')
-                    .map(id => id.trim())
-                    .filter(id => id.length > 0);
+            const resetForNewSelection = () => {
+                quickPick.value = '';
+                isWaitingForSelection = true;
+                
+                // Show initial suggestions
+                const initialSuggestions = this.cachedIds.slice(0, 50).map(id => ({ 
+                    id, 
+                    score: 0, 
+                    matches: true 
+                }));
+                quickPick.items = updateItems(initialSuggestions);
+                updateTitle();
             };
 
-            // (2) Start with the first 50 IDs unfiltered
-            const initialSuggestions = this.cachedIds.slice(0, 50).map(id => ({ id, score: 0, matches: true }));
-            quickPick.items = updateItems(initialSuggestions);
+            // Start with initial suggestions
+            resetForNewSelection();
 
-            // (3) Whenever the user types, re-run fuzzy and refresh item list
+            // Handle typing
             quickPick.onDidChangeValue((value) => {
-                const { prefix, currentQuery } = getCurrentQuery(value);
-                
-                // Always update suggestions based on the current query (part after last +)
-                const suggestions = currentQuery.length > 0
-                    ? this.getFuzzySuggestions(currentQuery, 50)
-                    : this.cachedIds.slice(0, 50).map(id => ({ id, score: 0, matches: true }));
-                
-                quickPick.items = updateItems(suggestions, currentQuery);
-            });
-
-            let pendingSelection = false;
-
-            // (4) When the user navigates through items (but hasn't pressed Enter yet)
-            quickPick.onDidChangeSelection(selectedItems => {
-                // Don't automatically add to input on selection change
-                // Wait for user to press Enter to confirm the selection
-            });
-
-            // (5) Handle Enter key press
-            quickPick.onDidAccept(() => {
-                const currentInput = quickPick.value.trim();
-                const selectedItems = quickPick.selectedItems;
-                
-                // Check if user has selected an item from the dropdown
-                if (selectedItems.length > 0) {
-                    const selectedId = selectedItems[0].label;
-                    const { prefix } = getCurrentQuery(currentInput);
+                // If user types '+', prepare for next selection
+                if (value.endsWith('+')) {
+                    const beforePlus = value.substring(0, value.length - 1).trim();
                     
-                    // Add the selected ID to the input with "+" separator
-                    if (prefix) {
-                        quickPick.value = prefix + selectedId + '+';
-                    } else {
-                        quickPick.value = selectedId + '+';
+                    // Check if there's a valid ID before the '+'
+                    if (beforePlus && this.hasId(beforePlus) && !selectedIds.includes(beforePlus)) {
+                        selectedIds.push(beforePlus);
+                        resetForNewSelection();
+                        return;
                     }
                     
-                    // Clear selection and reset items for next selection
-                    quickPick.selectedItems = [];
+                    // Invalid ID before +, remove the +
+                    quickPick.value = beforePlus;
+                    return;
+                }
+                
+                // Normal typing - update suggestions based on current query
+                const currentQuery = getCurrentQuery();
+                
+                if (currentQuery.length > 0) {
+                    const suggestions = this.getFuzzySuggestions(currentQuery, 50);
+                    quickPick.items = updateItems(suggestions, currentQuery);
+                } else {
+                    const initialSuggestions = this.cachedIds.slice(0, 50).map(id => ({ 
+                        id, 
+                        score: 0, 
+                        matches: true 
+                    }));
+                    quickPick.items = updateItems(initialSuggestions);
+                }
+            });
+
+            // Handle Enter key press
+            quickPick.onDidAccept(() => {
+                const currentValue = quickPick.value.trim();
+                const selectedItems = quickPick.selectedItems;
+                
+                // Case 1: User selected an item from the dropdown
+                if (selectedItems.length > 0) {
+                    const selectedId = selectedItems[0].label;
                     
-                    // Force refresh of suggestions for the empty query after the new +
+                    // Don't add duplicates
+                    if (!selectedIds.includes(selectedId)) {
+                        selectedIds.push(selectedId);
+                    }
+                    
+                    // Check if user wants to continue selecting (show + prompt)
+                    quickPick.value = selectedId + '+';
+                    
+                    // Small delay to let user see the selection, then reset
                     setTimeout(() => {
-                        const suggestions = this.cachedIds.slice(0, 50).map(id => ({ id, score: 0, matches: true }));
-                        quickPick.items = updateItems(suggestions);
-                    }, 10);
+                        resetForNewSelection();
+                    }, 100);
                     
-                    return; // Don't execute command yet, continue selecting
-                }
-                
-                // No item selected from dropdown, check if we should execute the command
-                if (currentInput.endsWith('+')) {
-                    // Input ends with '+', user might want to add more
                     return;
                 }
                 
-                // Check if the current input (without +) matches an existing ID exactly
-                if (currentInput && this.hasId(currentInput)) {
-                    // Single exact match, execute with this ID
+                // Case 2: User typed an ID directly
+                if (currentValue && this.hasId(currentValue)) {
+                    // Don't add duplicates
+                    if (!selectedIds.includes(currentValue)) {
+                        selectedIds.push(currentValue);
+                    }
+                    
+                    // If input doesn't end with +, this is the final selection
+                    if (!currentValue.endsWith('+')) {
+                        quickPick.hide();
+                        resolve(selectedIds);
+                        return;
+                    }
+                    
+                    // Otherwise continue selecting
+                    resetForNewSelection();
+                    return;
+                }
+                
+                // Case 3: No current input and we have selected IDs - execute command
+                if (!currentValue && selectedIds.length > 0) {
                     quickPick.hide();
-                    resolve([currentInput]);
+                    resolve(selectedIds);
                     return;
                 }
                 
-                // Parse multiple IDs from input
-                const selectedIds = parseSelectedIds(currentInput);
-                
+                // Case 4: Nothing selected or invalid input
                 if (selectedIds.length === 0) {
                     vscode.window.showInformationMessage('No IDs selected.');
                     quickPick.hide();
                     resolve([]);
-                    return;
-                }
-                
-                // Validate that all selected IDs exist in cache
-                const validIds = selectedIds.filter(id => this.hasId(id));
-                const invalidIds = selectedIds.filter(id => !this.hasId(id));
-                
-                if (invalidIds.length > 0) {
-                    vscode.window.showWarningMessage(`Invalid IDs found: ${invalidIds.join(', ')}`);
-                }
-                
-                if (validIds.length === 0) {
-                    vscode.window.showInformationMessage('No valid IDs selected.');
+                } else {
+                    // Execute with currently selected IDs
                     quickPick.hide();
-                    resolve([]);
-                    return;
+                    resolve(selectedIds);
                 }
-                
-                quickPick.hide();
-                resolve(validIds);
             });
 
             quickPick.onDidHide(() => {
-                resolve([]);
+                resolve(selectedIds.length > 0 ? selectedIds : []);
             });
 
             quickPick.show();
         });
     }
+
     /**
      * Get the number of cached IDs
      */
