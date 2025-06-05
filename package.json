@@ -14,37 +14,45 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "extension.runParser",
-        "title": "CodeTide: Initialize Project"
-      },
-      {
-        "command": "extension.getByIds",
-        "title": "CodeTide: Get by IDs"
-      },
-      {
-        "command": "extension.addIdsToCopilotContext",
-        "title": "CodeTide: Add IDs to Copilot Context"
-      },
-      {
-        "command": "extension.getByIdsDeep",
-        "title": "CodeTide: Get by IDs (Deep)"
-      },
-      {
-        "command": "extension.addIdsToCopilotContextDeep",
-        "title": "CodeTide: Add IDs to Copilot Context (Deep)"
-      },
-      {
-        "command": "extension.parseFile",
-        "title": "CodeTide: Parse Current File"
-      },
-      {
-        "command": "extension.refreshCachedIds",
-        "title": "CodeTide: Refresh Cached IDs"
-      }
-    ]
-  },
+      "commands": [
+        {
+          "command": "extension.runParser",
+          "title": "CodeTide: Initialize Project"
+        },
+        {
+          "command": "extension.getByIds",
+          "title": "CodeTide: Get by IDs"
+        },
+        {
+          "command": "extension.addIdsToCopilotContext",
+          "title": "CodeTide: Add IDs to Copilot Context"
+        },
+        {
+          "command": "extension.getByIdsShallow",
+          "title": "CodeTide: Get by IDs (Shallow)"
+        },
+        {
+          "command": "extension.addIdsToCopilotContextShallow",
+          "title": "CodeTide: Add IDs to Copilot Context (Shallow)"
+        },
+        {
+          "command": "extension.getByIdsDeep",
+          "title": "CodeTide: Get by IDs (Deep)"
+        },
+        {
+          "command": "extension.addIdsToCopilotContextDeep",
+          "title": "CodeTide: Add IDs to Copilot Context (Deep)"
+        },
+        {
+          "command": "extension.parseFile",
+          "title": "CodeTide: Parse Current File"
+        },
+        {
+          "command": "extension.refreshCachedIds",
+          "title": "CodeTide: Refresh Cached IDs"
+        }
+      ]
+    },
   "files": [
     "dist",
     "python",
