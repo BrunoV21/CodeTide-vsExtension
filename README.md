@@ -30,8 +30,6 @@ Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`) and search for:
 - **CodeTide: Add IDs to Copilot Context** – Add selected snippets to your Copilot/LLM context.
 - **CodeTide: Refresh Cached IDs** – Update the list of available snippet IDs.
 
-See the [Quickstart](./vsc-extension-quickstart.md) for developer setup and advanced usage.
-
 ## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for setup and guidelines.
