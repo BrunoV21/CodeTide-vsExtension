@@ -1,59 +1,10 @@
-import * as vscode from 'vscode';
-import { exec } from 'child_process';
-import * as path from 'path';
 import { FuzzyAutocomplete } from './fuzzyAutoComplete';
+import { RunPythonCommand } from './runPythonCommand';
 
-function runPythonCommand(
-    command: string,
-    args: string[],
-    title = 'Running CodeTide SubProcess',
-    onResult?: (output: string) => void // <- NEW
-) {
-    const pythonScript = path.join(__dirname, '..', 'python', 'tide.py');
+import * as vscode from 'vscode';
 
-    const venvPython = process.platform === 'win32'
-        ? path.join(__dirname, '..', 'venv', 'Scripts', 'python.exe')
-        : path.join(__dirname, '..', 'venv', 'bin', 'python');
-
-    const fullCommand = `"${venvPython}" "${pythonScript}" ${command} ${args.map(arg => `"${arg}"`).join(' ')}`;
-
-    vscode.window.withProgress(
-        {
-            location: vscode.ProgressLocation.Notification,
-            title,
-            cancellable: false
-        },
-        async (progress) => {
-            progress.report({ message: 'Running Python CLI...' });
-
-            return new Promise<void>((resolve) => {
-                exec(fullCommand, (err, stdout, stderr) => {
-                    if (err) {
-                        vscode.window.showErrorMessage(`Python error: ${err.message}`);
-                        resolve();
-                        return;
-                    }
-
-                    if (stderr) {
-                        console.error(`Python stderr: ${stderr}`);
-                    }
-
-                    const output = stdout.trim();
-                    if (onResult) {
-                        onResult(output);
-                    } else if (output.length > 0) {
-                        vscode.window.showInformationMessage(`[CodeTide] ${output}`);
-                    }
-
-                    resolve();
-                });
-            });
-        }
-    );
-}
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Congratulations, your extension "timestamp-commentor" is now active!');
 
     // Create fuzzy autocomplete instance
     const fuzzyAutocomplete = new FuzzyAutocomplete();
@@ -66,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        runPythonCommand('project', [workspacePath], 'CodeTide: Initialize Project');
+        RunPythonCommand('project', [workspacePath], 'CodeTide: Initialize Project');
     }));
 
     // Get by IDs command with fuzzy autocomplete
@@ -80,6 +31,12 @@ export function activate(context: vscode.ExtensionContext) {
         try {
             const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
 
+            if (selectedIds === null) {
+                // Special case - no cached IDs found, run project initialization
+                RunPythonCommand('project', [workspacePath], 'CodeTide: Initialize Project');
+                return;
+            }
+
             if (selectedIds.length === 0) {
                 vscode.window.showInformationMessage('No IDs selected.');
                 return;
@@ -91,7 +48,7 @@ export function activate(context: vscode.ExtensionContext) {
 
             vscode.window.showInformationMessage(`Selected ${selectedIds.length} ID(s): ${preview}`);
 
-            runPythonCommand('get', [workspacePath, ...selectedIds], 'Getting Code Snippets...', async (output) => {
+            RunPythonCommand('get', [workspacePath, ...selectedIds], 'Getting Code Snippets...', async (output) => {
                 const doc = await vscode.workspace.openTextDocument({
                     content: output,
                     language: 'plaintext'
@@ -118,7 +75,7 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            runPythonCommand('get', [workspacePath, ...selectedIds], 'Fetching Snippets...', async (output) => {
+            RunPythonCommand('get', [workspacePath, ...selectedIds], 'Fetching Snippets...', async (output) => {
                 const doc = await vscode.workspace.openTextDocument({
                     content: output.trim(),
                     language: 'plaintext' // Or use 'typescript', 'markdown', etc. based on your data
@@ -147,7 +104,7 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            runPythonCommand('get', [workspacePath, ...selectedIds, '--degree', '0'], 'CodeTide: Get by IDs (Shallow)', async (output) => {
+            RunPythonCommand('get', [workspacePath, ...selectedIds, '--degree', '0'], 'CodeTide: Get by IDs (Shallow)', async (output) => {
                 const doc = await vscode.workspace.openTextDocument({
                     content: output,
                     language: 'plaintext'
@@ -174,7 +131,7 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            runPythonCommand('get', [workspacePath, ...selectedIds, '--degree', '0'], 'CodeTide: Add IDs to Copilot Context (Shallow)', async (output) => {
+            RunPythonCommand('get', [workspacePath, ...selectedIds, '--degree', '0'], 'CodeTide: Add IDs to Copilot Context (Shallow)', async (output) => {
                 const doc = await vscode.workspace.openTextDocument({
                     content: output.trim(),
                     language: 'plaintext'
@@ -202,7 +159,7 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            runPythonCommand('get', [workspacePath, ...selectedIds, '--degree', '2'], 'CodeTide: Get by IDs (Deep)', async (output) => {
+            RunPythonCommand('get', [workspacePath, ...selectedIds, '--degree', '2'], 'CodeTide: Get by IDs (Deep)', async (output) => {
                 const doc = await vscode.workspace.openTextDocument({
                     content: output,
                     language: 'plaintext'
@@ -229,7 +186,7 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            runPythonCommand('get', [workspacePath, ...selectedIds, '--degree', '2'], 'CodeTide: Add IDs to Copilot Context (Deep)', async (output) => {
+            RunPythonCommand('get', [workspacePath, ...selectedIds, '--degree', '2'], 'CodeTide: Add IDs to Copilot Context (Deep)', async (output) => {
                 const doc = await vscode.workspace.openTextDocument({
                     content: output.trim(),
                     language: 'plaintext'
@@ -254,7 +211,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         const filePath = editor.document.uri.fsPath;
-        runPythonCommand('parse', [workspacePath, filePath]);
+        RunPythonCommand('parse', [workspacePath, filePath]);
     }));
 
     // Optional: Add command to refresh
@@ -265,7 +222,7 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
         
-        runPythonCommand('refresh', [workspacePath]);
+        RunPythonCommand('refresh', [workspacePath]);
     }));
 }
 
