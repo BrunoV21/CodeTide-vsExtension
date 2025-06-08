@@ -6,6 +6,10 @@
   "engines": {
     "vscode": "^1.100.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/BrunoV21/CodeTide-vsExtension"
+  },
   "categories": [
     "Other"
   ],
