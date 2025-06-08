@@ -149,7 +149,7 @@ export class FuzzyAutocomplete {
             const updateItems = (suggestions: IdSuggestion[], query: string = ''): vscode.QuickPickItem[] => {
                 return suggestions.map(suggestion => ({
                     label: suggestion.id,
-                    description: query && suggestion.score > 0 ? `Score: ${suggestion.score}` : '',
+                    description: query, // && suggestion.score > 0 ? `Score: ${suggestion.score}` : '',
                     detail: selectedIds.includes(suggestion.id) ? '✓ Already selected' : ''
                 }));
             };
