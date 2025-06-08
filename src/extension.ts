@@ -6,7 +6,7 @@ import { FuzzyAutocomplete } from './fuzzyAutoComplete';
 function runPythonCommand(
     command: string,
     args: string[],
-    title = 'Running Python Script',
+    title = 'Running CodeTide SubProcess',
     onResult?: (output: string) => void // <- NEW
 ) {
     const pythonScript = path.join(__dirname, '..', 'python', 'tide.py');
@@ -257,23 +257,15 @@ export function activate(context: vscode.ExtensionContext) {
         runPythonCommand('parse', [workspacePath, filePath]);
     }));
 
-    // Optional: Add command to refresh cached IDs
-    context.subscriptions.push(vscode.commands.registerCommand('extension.refreshCachedIds', () => {
+    // Optional: Add command to refresh
+    context.subscriptions.push(vscode.commands.registerCommand('extension.refresh', () => {
         const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (!workspacePath) {
             vscode.window.showErrorMessage("No workspace is open.");
             return;
         }
-
-        fuzzyAutocomplete.clearCache();
-        const loaded = fuzzyAutocomplete.loadCachedIds(workspacePath);
         
-        if (loaded) {
-            const count = fuzzyAutocomplete.getCachedIdCount();
-            vscode.window.showInformationMessage(`Refreshed cached IDs. Found ${count} IDs.`);
-        } else {
-            vscode.window.showWarningMessage('Failed to load cached IDs from storage/cached_ids.json');
-        }
+        runPythonCommand('refresh', [workspacePath]);
     }));
 }
 

@@ -14,15 +14,17 @@ async def init_project(args, force_build: bool = False, flush: bool = False) -> 
             raise FileNotFoundError()
         
         tide = CodeTide.deserialize(storagePath)
+        # TODO check if this is overkill
+        await tide.check_for_updates()
         if flush:
-            print(f"[CodeTide][INIT] Initialized from cache: {storagePath}")
+            print(f"[INIT] Initialized from cache: {storagePath}")
     
     except FileNotFoundError:
         st = time.time()
         tide = await CodeTide.from_path(rootpath=args.project_path)
         tide.serialize(storagePath, include_cached_ids=True)
         if flush:
-            print(f"[CodeTide][INIT] Fresh parse of {args.project_path}: {len(tide.codebase.root)} files in {time.time()-st:.2f}s")
+            print(f"[INIT] Fresh parse of {args.project_path}: {len(tide.codebase.root)} files in {time.time()-st:.2f}s")
     return tide
 
 async def handle_get(args):
@@ -34,10 +36,10 @@ async def handle_get(args):
         print(f"[CodeTide][GET] No matches found for {args.ids}")
         
 
-async def handle_parse(args):
+async def handle_reset(args):
     tide = await init_project(args)
-    print(f"[CodeTide][PARSE] File parsed: {args.file_path} in {args.project_path}")
-    # Actual parsing logic to be implemented
+    await tide._reset()
+    print(f"reseted project in {args.project_path}")
 
 async def main():
     parser = argparse.ArgumentParser(description="CLI for VSCode Extension")
@@ -53,10 +55,9 @@ async def main():
     parser_get.add_argument("--degree", type=int, default=1, help="Depth of retrieval")
     parser_get.set_defaults(func=handle_get)
 
-    parser_parse = subparsers.add_parser("parse", help="Parse a specific file in the project")
+    parser_parse = subparsers.add_parser("refresh", help="Refresh a tide project by reseting it")
     parser_parse.add_argument("project_path", help="Path to the current workspace/project")
-    parser_parse.add_argument("file_path", help="Path to the file to parse")
-    parser_parse.set_defaults(func=handle_parse)
+    parser_parse.set_defaults(func=handle_reset)
 
     args = parser.parse_args()
     await args.func(args)
