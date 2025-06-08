@@ -15,7 +15,7 @@ async def init_project(args, force_build: bool = False, flush: bool = False) -> 
         
         tide = CodeTide.deserialize(storagePath)
         # TODO check if this is overkill
-        await tide.check_for_updates()
+        await tide.check_for_updates(serialize=True, include_cached_ids=True)
         if flush:
             print(f"[INIT] Initialized from cache: {storagePath}")
     
@@ -33,12 +33,13 @@ async def handle_get(args):
     if result:
         print(result)
     else:
-        print(f"[CodeTide][GET] No matches found for {args.ids}")
+        print(f"[GET] No matches found for {args.ids}")
         
 
 async def handle_reset(args):
     tide = await init_project(args)
     await tide._reset()
+    tide.serialize(include_cached_ids=True)
     print(f"reseted project in {args.project_path}")
 
 async def main():
