@@ -1,5 +1,6 @@
 {
-  "name": "codetide",
+  "name": "codetide",  
+	"publisher": "BrunoV21",
   "displayName": "CodeTide",
   "description": "Get just the right context for your favourite LLMs!",
   "version": "0.0.1",
@@ -10,9 +11,13 @@
     "type": "git",
     "url": "git://github.com/BrunoV21/CodeTide-vsExtension"
   },
-  "categories": [
+	"categories": [
+		"AI",
+		"Chat",
+    "Snippets",
+    "Programming Languages",
     "Other"
-  ],
+	],
   "main": "./dist/extension.js",
   "contributes": {
       "commands": [
