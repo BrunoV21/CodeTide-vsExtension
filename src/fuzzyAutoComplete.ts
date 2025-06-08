@@ -1,3 +1,5 @@
+import { RunPythonCommand } from './runPythonCommand';
+
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -125,8 +127,25 @@ export class FuzzyAutocomplete {
         if (this.cachedIds.length === 0) {
             const loaded = this.loadCachedIds(workspacePath);
             if (!loaded || this.cachedIds.length === 0) {
-                vscode.window.showWarningMessage('No cached IDs found. Make sure storage/cached_ids.json exists and contains ID data.');
-                return [];
+                vscode.window.showWarningMessage('No cached IDs found. Initializing project...');
+                try {
+                    // Wait for project initialization to complete
+                    await RunPythonCommand('project', [workspacePath], 'CodeTide: Initialize Project');
+                    
+                    // Give a small delay to ensure files are written
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // Try loading IDs again after initialization
+                    this.loadCachedIds(workspacePath);
+                    
+                    if (this.cachedIds.length === 0) {
+                        vscode.window.showErrorMessage('Still no IDs found after initialization.');
+                        return [];
+                    }
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Project initialization failed: ${error}`);
+                    return [];
+                }
             }
         }
 
