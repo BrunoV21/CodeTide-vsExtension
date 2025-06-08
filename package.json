@@ -1,16 +1,13 @@
 {
   "name": "codetide",
   "displayName": "CodeTide",
-  "description": "get just the right context for your favourite LLMs!",
+  "description": "Get just the right context for your favourite LLMs!",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.100.0"
   },
   "categories": [
     "Other"
-  ],
-  "activationEvents": [
-    "onCommand: extension.addTimestamp"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -44,12 +41,8 @@
           "title": "CodeTide: Add IDs to Copilot Context (Deep)"
         },
         {
-          "command": "extension.parseFile",
-          "title": "CodeTide: Parse Current File"
-        },
-        {
-          "command": "extension.refreshCachedIds",
-          "title": "CodeTide: Refresh Cached IDs"
+          "command": "extension.refresh",
+          "title": "CodeTide: Refresh the project"
         }
       ]
     },
