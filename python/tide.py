@@ -38,7 +38,19 @@ async def handle_get(args):
 async def handle_tree(args):
     tide = await init_project(args)
     result = tide.codebase.get_tree_view(args.include_modules, args.include_types)
-    print(result)
+    try:
+        # First try printing directly
+        print(result)
+    except (UnicodeEncodeError, UnicodeError):
+        try:
+            # Try with UTF-8 encoding
+            import sys
+            if sys.stdout.encoding != 'utf-8':
+                sys.stdout.reconfigure(encoding='utf-8')  # Python 3.7+
+            print(result)
+        except Exception:
+            # Fallback to ASCII-safe output
+            print(result.encode('ascii', 'replace').decode('ascii'))
 
 async def handle_reset(args):
     tide = await init_project(args)
