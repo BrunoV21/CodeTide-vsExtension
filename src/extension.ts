@@ -48,8 +48,6 @@ function initializeExtension(context: vscode.ExtensionContext) {
             return;
         }
 
-        // Check if virtual environment is valid before running 
-
         RunPythonCommand('project', [workspacePath], 'CodeTide: Initialize Project');
     }));
 
@@ -60,8 +58,6 @@ function initializeExtension(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage("No workspace is open.");
             return;
         }
-
-        // Check if virtual environment is valid before running 
 
         try {
             const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
