@@ -11,8 +11,8 @@ export function RunPythonCommand(
 ): Promise<void> {
     const pythonScript = path.join(__dirname, '..', 'python', 'tide.py');
     const venvPython = process.platform === 'win32'
-        ? path.join(__dirname, '..', 'venv', 'Scripts', 'python.exe')
-        : path.join(__dirname, '..', 'venv', 'bin', 'python');
+        ? path.join(__dirname, '..', 'codetide.venv', 'Scripts', 'python.exe')
+        : path.join(__dirname, '..', 'codetide.venv', 'bin', 'python');
 
     const fullCommand = `"${venvPython}" "${pythonScript}" ${command} ${args.map(arg => `"${arg}"`).join(' ')}`;
 
