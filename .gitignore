@@ -196,3 +196,4 @@ cython_debug/
 .vscode/
 node_modules/
 storage/
+codetide.venv
