@@ -23,6 +23,9 @@
     "dist",
     "python"
   ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
       "commands": [
         {
@@ -56,6 +59,18 @@
         {
           "command": "extension.refresh",
           "title": "CodeTide: Refresh the project"
+        },
+        {
+          "command": "extension.reinstallPythonEnv",
+          "title": "CodeTide: Reinstall Python Environment"
+        },
+        {
+          "command": "extension.updatePythonDependencies",
+          "title": "CodeTide: Update Python Dependencies"
+        },
+        {
+          "command": "extension.checkPythonEnv",
+          "title": "CodeTide: Check Python Environment Status"
         }
       ]
     },
