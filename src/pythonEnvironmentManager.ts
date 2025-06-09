@@ -8,9 +8,11 @@ const execAsync = promisify(exec);
 
 export class PythonEnvironmentManager {
     private extensionContext: vscode.ExtensionContext;
+    private extensionId: string;
 
-    constructor(context: vscode.ExtensionContext) {
+    constructor(context: vscode.ExtensionContext, extensionId: string) {
         this.extensionContext = context;
+        this.extensionId = extensionId;
     }
 
     /**
@@ -37,10 +39,42 @@ export class PythonEnvironmentManager {
         const requirementsPath = this.getRequirementsPath();
 
         if (!fs.existsSync(venvPath)) {
+            // Create environment if it doesn't exist
             await this.createVirtualEnvironment(venvPath, requirementsPath);
-        } else {
-            // Check if requirements need to be updated
-            await this.updateVirtualEnvironment(venvPath, requirementsPath);
+        }
+        // Otherwise do nothing - no automatic updates
+    }
+
+    /**
+     * Explicitly update the Python dependencies
+     */
+    async updateDependencies(): Promise<void> {
+        const venvPath = this.getVenvPath();
+        const requirementsPath = this.getRequirementsPath();
+
+        if (!fs.existsSync(venvPath)) {
+            vscode.window.showErrorMessage('Python environment does not exist. Please reinstall the extension.');
+            return;
+        }
+
+        try {
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: "CodeTide: Updating Python dependencies...",
+                cancellable: false
+            }, async () => {
+                const pipPath = this.getPipCommand(venvPath);
+                await execAsync(`"${pipPath}" install -r "${requirementsPath}"`);
+                
+                // Update the requirements timestamp
+                const venvStatsPath = path.join(venvPath, '.requirements_timestamp');
+                const requirementsStats = fs.statSync(requirementsPath);
+                fs.writeFileSync(venvStatsPath, requirementsStats.mtimeMs.toString());
+            });
+            
+            vscode.window.showInformationMessage('CodeTide: Dependencies updated successfully!');
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to update dependencies: ${error}`);
         }
     }
 
@@ -92,6 +126,11 @@ export class PythonEnvironmentManager {
                     if (fs.existsSync(requirementsPath)) {
                         const pipPath = this.getPipCommand(venvPath);
                         await execAsync(`"${pipPath}" install -r "${requirementsPath}"`);
+                        
+                        // Store requirements timestamp
+                        const venvStatsPath = path.join(venvPath, '.requirements_timestamp');
+                        const requirementsStats = fs.statSync(requirementsPath);
+                        fs.writeFileSync(venvStatsPath, requirementsStats.mtimeMs.toString());
                     }
                     
                     progress.report({ increment: 100, message: "Setup complete!" });
@@ -104,44 +143,6 @@ export class PythonEnvironmentManager {
                 }
             });
         });
-    }
-
-    /**
-     * Update virtual environment if requirements have changed
-     */
-    private async updateVirtualEnvironment(venvPath: string, requirementsPath: string): Promise<void> {
-        if (!fs.existsSync(requirementsPath)) {
-            return;
-        }
-
-        try {
-            const pipPath = this.getPipCommand(venvPath);
-            
-            // Check if requirements file has been modified since last install
-            const venvStatsPath = path.join(venvPath, '.requirements_timestamp');
-            const requirementsStats = fs.statSync(requirementsPath);
-            
-            let shouldUpdate = true;
-            if (fs.existsSync(venvStatsPath)) {
-                const lastUpdateTime = parseInt(fs.readFileSync(venvStatsPath, 'utf8'));
-                shouldUpdate = requirementsStats.mtimeMs > lastUpdateTime;
-            }
-
-            if (shouldUpdate) {
-                await vscode.window.withProgress({
-                    location: vscode.ProgressLocation.Notification,
-                    title: "CodeTide: Updating Python dependencies...",
-                    cancellable: false
-                }, async () => {
-                    await execAsync(`"${pipPath}" install -r "${requirementsPath}"`);
-                    fs.writeFileSync(venvStatsPath, requirementsStats.mtimeMs.toString());
-                });
-                
-                vscode.window.showInformationMessage('CodeTide: Dependencies updated successfully!');
-            }
-        } catch (error) {
-            console.warn(`Failed to update virtual environment: ${error}`);
-        }
     }
 
     /**
@@ -243,6 +244,15 @@ export class PythonEnvironmentManager {
                 vscode.window.showInformationMessage('CodeTide: Python environment reinstalled successfully!');
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to reinstall Python environment: ${error}`);
+            }
+        }));
+
+        // Command to update Python dependencies
+        commands.push(vscode.commands.registerCommand('extension.updatePythonDependencies', async () => {
+            try {
+                await this.updateDependencies();
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to update dependencies: ${error}`);
             }
         }));
 

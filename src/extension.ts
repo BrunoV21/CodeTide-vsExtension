@@ -8,10 +8,11 @@ let pythonEnvManager: PythonEnvironmentManager;
 
 export async function activate(context: vscode.ExtensionContext) {
     try {
-        // Initialize Python Environment Manager
-        pythonEnvManager = new PythonEnvironmentManager(context);
+        // Initialize Python Environment Manager with extension ID
+        const extensionId = 'your.publisher.codetide'; // Replace with your actual extension ID
+        pythonEnvManager = new PythonEnvironmentManager(context, extensionId);
         
-        // Check Python installation and setup virtual environment
+        // Check Python installation and setup virtual environment (only creates if needed)
         await pythonEnvManager.setupPythonEnvironment();
         
         // Register Python environment management commands
@@ -28,7 +29,6 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.window.showErrorMessage(`CodeTide Extension failed to initialize: ${error}`);
         
         // Still register basic commands even if Python setup fails
-        // This allows users to retry or check the environment
         const envCommands = pythonEnvManager?.registerCommands() || [];
         context.subscriptions.push(...envCommands);
         
@@ -48,11 +48,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
             return;
         }
 
-        // Check if virtual environment is valid before running
-        if (!pythonEnvManager.isVenvValid()) {
-            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
-            return;
-        }
+        // Check if virtual environment is valid before running 
 
         RunPythonCommand('project', [workspacePath], 'CodeTide: Initialize Project');
     }));
@@ -65,11 +61,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
             return;
         }
 
-        // Check if virtual environment is valid before running
-        if (!pythonEnvManager.isVenvValid()) {
-            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
-            return;
-        }
+        // Check if virtual environment is valid before running 
 
         try {
             const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
@@ -109,11 +101,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage("No workspace is open.");
             return;
         }
-
-        if (!pythonEnvManager.isVenvValid()) {
-            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
-            return;
-        }
+ 
 
         try {
             const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
@@ -144,12 +132,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage("No workspace is open.");
             return;
         }
-
-        if (!pythonEnvManager.isVenvValid()) {
-            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
-            return;
-        }
-
+        
         try {
             const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
             if (selectedIds.length === 0) {
@@ -174,11 +157,6 @@ function initializeExtension(context: vscode.ExtensionContext) {
         const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (!workspacePath) {
             vscode.window.showErrorMessage("No workspace is open.");
-            return;
-        }
-
-        if (!pythonEnvManager.isVenvValid()) {
-            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
             return;
         }
 
@@ -209,12 +187,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage("No workspace is open.");
             return;
         }
-
-        if (!pythonEnvManager.isVenvValid()) {
-            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
-            return;
-        }
-
+        
         try {
             const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
             if (selectedIds.length === 0) {
@@ -241,12 +214,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage("No workspace is open.");
             return;
         }
-
-        if (!pythonEnvManager.isVenvValid()) {
-            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
-            return;
-        }
-
+        
         try {
             const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
             if (selectedIds.length === 0) {
@@ -276,12 +244,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage("Workspace or editor not available.");
             return;
         }
-
-        if (!pythonEnvManager.isVenvValid()) {
-            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
-            return;
-        }
-
+        
         const filePath = editor.document.uri.fsPath;
         RunPythonCommand('parse', [workspacePath, filePath]);
     }));
@@ -293,11 +256,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage("No workspace is open.");
             return;
         }
-
-        if (!pythonEnvManager.isVenvValid()) {
-            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
-            return;
-        }
+ 
         
         RunPythonCommand('refresh', [workspacePath]);
     }));
