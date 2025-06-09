@@ -34,7 +34,11 @@ async def handle_get(args):
         print(result)
     else:
         print(f"[GET] No matches found for {args.ids}")
-        
+
+async def handle_tree(args):
+    tide = await init_project(args)
+    result = tide.codebase.get_tree_view(args.include_modules, args.include_types)
+    print(result)
 
 async def handle_reset(args):
     tide = await init_project(args)
@@ -55,6 +59,12 @@ async def main():
     parser_get.add_argument("ids", nargs="+", help="List of item IDs to get")
     parser_get.add_argument("--degree", type=int, default=1, help="Depth of retrieval")
     parser_get.set_defaults(func=handle_get)
+
+    parser_tree = subparsers.add_parser("tree", help="Get tree view of the codebase")
+    parser_tree.add_argument("project_path", help="Path to the current workspace/project")
+    parser_tree.add_argument("--include-modules", action="store_true", help="Include modules in tree view")
+    parser_tree.add_argument("--include-types", action="store_true", help="Include types in tree view")
+    parser_tree.set_defaults(func=handle_tree)
 
     parser_parse = subparsers.add_parser("refresh", help="Refresh a tide project by reseting it")
     parser_parse.add_argument("project_path", help="Path to the current workspace/project")
