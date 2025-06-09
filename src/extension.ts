@@ -231,6 +231,69 @@ function initializeExtension(context: vscode.ExtensionContext) {
         }
     }));
 
+        // Tree View command (basic)
+    context.subscriptions.push(vscode.commands.registerCommand('extension.getTreeView', async () => {
+        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (!workspacePath) {
+            vscode.window.showErrorMessage("No workspace is open.");
+            return;
+        }
+
+        try {
+            RunPythonCommand('tree', [workspacePath], 'CodeTide: Generating Tree View...', async (output) => {
+                const doc = await vscode.workspace.openTextDocument({
+                    content: output,
+                    language: 'plaintext'
+                });
+                vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+            });
+        } catch (error) {
+            vscode.window.showErrorMessage(`Error generating tree view: ${error}`);
+        }
+    }));
+
+    // Tree View with Modules command
+    context.subscriptions.push(vscode.commands.registerCommand('extension.getTreeViewModules', async () => {
+        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (!workspacePath) {
+            vscode.window.showErrorMessage("No workspace is open.");
+            return;
+        }
+
+        try {
+            RunPythonCommand('tree', [workspacePath, '--include-modules'], 'CodeTide: Generating Tree View (with Modules)...', async (output) => {
+                const doc = await vscode.workspace.openTextDocument({
+                    content: output,
+                    language: 'plaintext'
+                });
+                vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+            });
+        } catch (error) {
+            vscode.window.showErrorMessage(`Error generating tree view: ${error}`);
+        }
+    }));
+
+    // Tree View with Modules and Types command
+    context.subscriptions.push(vscode.commands.registerCommand('extension.getTreeViewModulesAnnotated', async () => {
+        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (!workspacePath) {
+            vscode.window.showErrorMessage("No workspace is open.");
+            return;
+        }
+
+        try {
+            RunPythonCommand('tree', [workspacePath, '--include-modules', '--include-types'], 'CodeTide: Generating Tree View (with Modules & Types)...', async (output) => {
+                const doc = await vscode.workspace.openTextDocument({
+                    content: output,
+                    language: 'plaintext'
+                });
+                vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+            });
+        } catch (error) {
+            vscode.window.showErrorMessage(`Error generating tree view: ${error}`);
+        }
+    }));
+
     // Parse specific file
     context.subscriptions.push(vscode.commands.registerCommand('extension.parseFile', () => {
         const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -245,14 +308,13 @@ function initializeExtension(context: vscode.ExtensionContext) {
         RunPythonCommand('parse', [workspacePath, filePath]);
     }));
 
-    // Optional: Add command to refresh
+    // Refresh command
     context.subscriptions.push(vscode.commands.registerCommand('extension.refresh', () => {
         const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (!workspacePath) {
             vscode.window.showErrorMessage("No workspace is open.");
             return;
         }
- 
         
         RunPythonCommand('refresh', [workspacePath]);
     }));

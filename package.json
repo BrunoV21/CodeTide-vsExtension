@@ -57,6 +57,18 @@
           "title": "CodeTide: Add IDs to Copilot Context (Deep)"
         },
         {
+          "command": "extension.getTreeView",
+          "title": "CodeTide: Get Tree View"
+        },
+        {
+          "command": "extension.getTreeViewModules",
+          "title": "CodeTide: Get Tree View (with Modules)"
+        },
+        {
+          "command": "extension.getTreeViewModulesAnnotated",
+          "title": "CodeTide: Get Tree View (with Modules & Types)"
+        },
+        {
           "command": "extension.refresh",
           "title": "CodeTide: Refresh the project"
         },
