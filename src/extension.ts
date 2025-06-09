@@ -1,11 +1,42 @@
 import { FuzzyAutocomplete } from './fuzzyAutoComplete';
 import { RunPythonCommand } from './runPythonCommand';
+import { PythonEnvironmentManager } from './pythonEnvironmentManager';
 
 import * as vscode from 'vscode';
 
+let pythonEnvManager: PythonEnvironmentManager;
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
+    try {
+        // Initialize Python Environment Manager
+        pythonEnvManager = new PythonEnvironmentManager(context);
+        
+        // Check Python installation and setup virtual environment
+        await pythonEnvManager.setupPythonEnvironment();
+        
+        // Register Python environment management commands
+        const envCommands = pythonEnvManager.registerCommands();
+        context.subscriptions.push(...envCommands);
+        
+        // Initialize the main extension functionality
+        initializeExtension(context);
+        
+        // Show success message
+        vscode.window.showInformationMessage('CodeTide Extension activated successfully!');
+        
+    } catch (error) {
+        vscode.window.showErrorMessage(`CodeTide Extension failed to initialize: ${error}`);
+        
+        // Still register basic commands even if Python setup fails
+        // This allows users to retry or check the environment
+        const envCommands = pythonEnvManager?.registerCommands() || [];
+        context.subscriptions.push(...envCommands);
+        
+        return;
+    }
+}
 
+function initializeExtension(context: vscode.ExtensionContext) {
     // Create fuzzy autocomplete instance
     const fuzzyAutocomplete = new FuzzyAutocomplete();
 
@@ -17,6 +48,12 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
+        // Check if virtual environment is valid before running
+        if (!pythonEnvManager.isVenvValid()) {
+            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
+            return;
+        }
+
         RunPythonCommand('project', [workspacePath], 'CodeTide: Initialize Project');
     }));
 
@@ -25,6 +62,12 @@ export function activate(context: vscode.ExtensionContext) {
         const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (!workspacePath) {
             vscode.window.showErrorMessage("No workspace is open.");
+            return;
+        }
+
+        // Check if virtual environment is valid before running
+        if (!pythonEnvManager.isVenvValid()) {
+            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
             return;
         }
 
@@ -67,6 +110,11 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
+        if (!pythonEnvManager.isVenvValid()) {
+            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
+            return;
+        }
+
         try {
             const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
 
@@ -78,7 +126,7 @@ export function activate(context: vscode.ExtensionContext) {
             RunPythonCommand('get', [workspacePath, ...selectedIds], 'Fetching Snippets...', async (output) => {
                 const doc = await vscode.workspace.openTextDocument({
                     content: output.trim(),
-                    language: 'plaintext' // Or use 'typescript', 'markdown', etc. based on your data
+                    language: 'plaintext'
                 });
                 await vscode.window.showTextDocument(doc);
 
@@ -94,6 +142,11 @@ export function activate(context: vscode.ExtensionContext) {
         const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (!workspacePath) {
             vscode.window.showErrorMessage("No workspace is open.");
+            return;
+        }
+
+        if (!pythonEnvManager.isVenvValid()) {
+            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
             return;
         }
 
@@ -121,6 +174,11 @@ export function activate(context: vscode.ExtensionContext) {
         const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (!workspacePath) {
             vscode.window.showErrorMessage("No workspace is open.");
+            return;
+        }
+
+        if (!pythonEnvManager.isVenvValid()) {
+            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
             return;
         }
 
@@ -152,6 +210,11 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
+        if (!pythonEnvManager.isVenvValid()) {
+            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
+            return;
+        }
+
         try {
             const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
             if (selectedIds.length === 0) {
@@ -179,6 +242,11 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
+        if (!pythonEnvManager.isVenvValid()) {
+            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
+            return;
+        }
+
         try {
             const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
             if (selectedIds.length === 0) {
@@ -199,7 +267,6 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }));
 
-
     // Parse specific file
     context.subscriptions.push(vscode.commands.registerCommand('extension.parseFile', () => {
         const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -207,6 +274,11 @@ export function activate(context: vscode.ExtensionContext) {
 
         if (!workspacePath || !editor) {
             vscode.window.showErrorMessage("Workspace or editor not available.");
+            return;
+        }
+
+        if (!pythonEnvManager.isVenvValid()) {
+            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
             return;
         }
 
@@ -221,9 +293,24 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage("No workspace is open.");
             return;
         }
+
+        if (!pythonEnvManager.isVenvValid()) {
+            vscode.window.showErrorMessage("Python environment is not properly set up. Please reinstall the Python environment.");
+            return;
+        }
         
         RunPythonCommand('refresh', [workspacePath]);
     }));
 }
 
-export function deactivate() {}
+/**
+ * Get the Python environment manager instance
+ * This can be used by other modules that need access to Python paths
+ */
+export function getPythonEnvironmentManager(): PythonEnvironmentManager {
+    return pythonEnvManager;
+}
+
+export function deactivate() {
+    // Cleanup logic can go here if needed
+}
