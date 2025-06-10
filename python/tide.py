@@ -1,11 +1,25 @@
-# python/tide.py
+from codetide.core.defaults import DEFAULT_SERIALIZATION_PATH
+from codetide import CodeTide
+
 from pathlib import Path
 import argparse
 import asyncio
 import time
 
-from codetide import CodeTide
-from codetide.core.defaults import DEFAULT_SERIALIZATION_PATH
+def safe_print(string :str):
+    try:
+        # First try printing directly
+        print(string)
+    except (UnicodeEncodeError, UnicodeError):
+        try:
+            # Try with UTF-8 encoding
+            import sys
+            if sys.stdout.encoding != 'utf-8':
+                sys.stdout.reconfigure(encoding='utf-8')  # Python 3.7+
+            print(string)
+        except Exception:
+            # Fallback to ASCII-safe output
+            print(string.encode('ascii', 'replace').decode('ascii'))
 
 async def init_project(args, force_build: bool = False, flush: bool = False) -> CodeTide:
     storagePath = Path(args.project_path) / DEFAULT_SERIALIZATION_PATH
@@ -14,49 +28,36 @@ async def init_project(args, force_build: bool = False, flush: bool = False) -> 
             raise FileNotFoundError()
         
         tide = CodeTide.deserialize(storagePath)
-        # TODO check if this is overkill
         await tide.check_for_updates(serialize=True, include_cached_ids=True)
         if flush:
-            print(f"[INIT] Initialized from cache: {storagePath}")
+            safe_print(f"[INIT] Initialized from cache: {storagePath}")
     
     except FileNotFoundError:
         st = time.time()
         tide = await CodeTide.from_path(rootpath=args.project_path)
         tide.serialize(storagePath, include_cached_ids=True)
         if flush:
-            print(f"[INIT] Fresh parse of {args.project_path}: {len(tide.codebase.root)} files in {time.time()-st:.2f}s")
+            safe_print(f"[INIT] Fresh parse of {args.project_path}: {len(tide.codebase.root)} files in {time.time()-st:.2f}s")
     return tide
 
 async def handle_get(args):
     tide = await init_project(args)
-    result = tide.codebase.get(args.ids, degree=args.degree, as_string=True)
+    result = tide.get(args.ids, degree=args.degree, as_string=True)
     if result:
-        print(result)
+        safe_print(result)
     else:
-        print(f"[GET] No matches found for {args.ids}")
+        safe_print(f"[GET] No matches found for {args.ids}")
 
 async def handle_tree(args):
     tide = await init_project(args)
     result = tide.codebase.get_tree_view(args.include_modules, args.include_types)
-    try:
-        # First try printing directly
-        print(result)
-    except (UnicodeEncodeError, UnicodeError):
-        try:
-            # Try with UTF-8 encoding
-            import sys
-            if sys.stdout.encoding != 'utf-8':
-                sys.stdout.reconfigure(encoding='utf-8')  # Python 3.7+
-            print(result)
-        except Exception:
-            # Fallback to ASCII-safe output
-            print(result.encode('ascii', 'replace').decode('ascii'))
+    safe_print(result)
 
 async def handle_reset(args):
     tide = await init_project(args)
     await tide._reset()
     tide.serialize(include_cached_ids=True)
-    print(f"reseted project in {args.project_path}")
+    safe_print(f"reseted project in {args.project_path}")
 
 async def main():
     parser = argparse.ArgumentParser(description="CLI for VSCode Extension")
