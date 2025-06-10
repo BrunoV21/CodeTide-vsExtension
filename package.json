@@ -30,64 +30,52 @@
   ],
   "contributes": {
       "commands": [
-        {
-          "command": "extension.runParser",
-          "title": "CodeTide: Initialize Project"
-        },
-        {
-          "command": "extension.getByIds",
-          "title": "CodeTide: Get by IDs"
-        },
-        {
-          "command": "extension.addIdsToCopilotContext",
-          "title": "CodeTide: Add IDs to Copilot Context"
-        },
-        {
-          "command": "extension.getByIdsShallow",
-          "title": "CodeTide: Get by IDs (Shallow)"
-        },
-        {
-          "command": "extension.addIdsToCopilotContextShallow",
-          "title": "CodeTide: Add IDs to Copilot Context (Shallow)"
-        },
-        {
-          "command": "extension.getByIdsDeep",
-          "title": "CodeTide: Get by IDs (Deep)"
-        },
-        {
-          "command": "extension.addIdsToCopilotContextDeep",
-          "title": "CodeTide: Add IDs to Copilot Context (Deep)"
-        },
-        {
-          "command": "extension.getTreeView",
-          "title": "CodeTide: Get Tree View"
-        },
-        {
-          "command": "extension.getTreeViewModules",
-          "title": "CodeTide: Get Tree View (with Modules)"
-        },
-        {
-          "command": "extension.getTreeViewModulesAnnotated",
-          "title": "CodeTide: Get Tree View (with Modules & Types)"
-        },
-        {
-          "command": "extension.refresh",
-          "title": "CodeTide: Refresh the project"
-        },
-        {
-          "command": "extension.reinstallPythonEnv",
-          "title": "CodeTide: Reinstall Python Environment"
-        },
-        {
-          "command": "extension.updatePythonDependencies",
-          "title": "CodeTide: Update Python Dependencies"
-        },
-        {
-          "command": "extension.checkPythonEnv",
-          "title": "CodeTide: Check Python Environment Status"
-        }
+          {
+              "command": "extension.runParser",
+              "title": "CodeTide: Initialize Project"
+          },
+          {
+              "command": "extension.getByIds",
+              "title": "CodeTide: Get by IDs"
+          },
+          {
+              "command": "extension.getByIdsShallow",
+              "title": "CodeTide: Get by IDs (Shallow)"
+          },
+          {
+              "command": "extension.getByIdsDeep",
+              "title": "CodeTide: Get by IDs (Deep)"
+          },
+          {
+              "command": "extension.getTreeView",
+              "title": "CodeTide: Get Tree View"
+          },
+          {
+              "command": "extension.getTreeViewModules",
+              "title": "CodeTide: Get Tree View (with Modules)"
+          },
+          {
+              "command": "extension.getTreeViewModulesAnnotated",
+              "title": "CodeTide: Get Tree View (with Modules & Types)"
+          },
+          {
+              "command": "extension.refresh",
+              "title": "CodeTide: Refresh the project"
+          },
+          {
+              "command": "extension.reinstallPythonEnv",
+              "title": "CodeTide: Reinstall Python Environment"
+          },
+          {
+              "command": "extension.updatePythonDependencies",
+              "title": "CodeTide: Update Python Dependencies"
+          },
+          {
+              "command": "extension.checkPythonEnv",
+              "title": "CodeTide: Check Python Environment Status"
+          }
       ]
-    },
+  },
   "scripts": {
     "vscode:prepublish": "npm run package",
     "compile": "webpack",

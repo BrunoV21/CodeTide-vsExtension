@@ -91,36 +91,6 @@ function initializeExtension(context: vscode.ExtensionContext) {
         }
     }));
 
-    context.subscriptions.push(vscode.commands.registerCommand('extension.addIdsToCopilotContext', async () => {
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        if (!workspacePath) {
-            vscode.window.showErrorMessage("No workspace is open.");
-            return;
-        }
- 
-
-        try {
-            const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
-
-            if (selectedIds.length === 0) {
-                vscode.window.showInformationMessage('No IDs selected.');
-                return;
-            }
-
-            RunPythonCommand('get', [workspacePath, ...selectedIds], 'Fetching Snippets...', async (output) => {
-                const doc = await vscode.workspace.openTextDocument({
-                    content: output.trim(),
-                    language: 'plaintext'
-                });
-                await vscode.window.showTextDocument(doc);
-
-                vscode.window.showInformationMessage(`Added ${selectedIds.length} ID(s) to a new editor for Copilot.`);
-            });
-        } catch (error) {
-            vscode.window.showErrorMessage(`Error selecting IDs: ${error}`);
-        }
-    }));
-
     // Get by IDs (Shallow)
     context.subscriptions.push(vscode.commands.registerCommand('extension.getByIdsShallow', async () => {
         const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -142,34 +112,6 @@ function initializeExtension(context: vscode.ExtensionContext) {
                     language: 'plaintext'
                 });
                 vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
-            });
-        } catch (error) {
-            vscode.window.showErrorMessage(`Error selecting IDs: ${error}`);
-        }
-    }));
-
-    // Add IDs to Copilot Context (Shallow)
-    context.subscriptions.push(vscode.commands.registerCommand('extension.addIdsToCopilotContextShallow', async () => {
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        if (!workspacePath) {
-            vscode.window.showErrorMessage("No workspace is open.");
-            return;
-        }
-
-        try {
-            const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
-            if (selectedIds.length === 0) {
-                vscode.window.showInformationMessage('No IDs selected.');
-                return;
-            }
-
-            RunPythonCommand('get', [workspacePath, ...selectedIds, '--degree', '0'], 'CodeTide: Add IDs to Copilot Context (Shallow)', async (output) => {
-                const doc = await vscode.workspace.openTextDocument({
-                    content: output.trim(),
-                    language: 'plaintext'
-                });
-                await vscode.window.showTextDocument(doc);
-                vscode.window.showInformationMessage(`[CodeTide] Added ${selectedIds.length} ID(s) to Copilot context (shallow).`);
             });
         } catch (error) {
             vscode.window.showErrorMessage(`Error selecting IDs: ${error}`);
@@ -203,35 +145,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
         }
     }));
 
-    // Add IDs to Copilot Context (Deep)
-    context.subscriptions.push(vscode.commands.registerCommand('extension.addIdsToCopilotContextDeep', async () => {
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        if (!workspacePath) {
-            vscode.window.showErrorMessage("No workspace is open.");
-            return;
-        }
-        
-        try {
-            const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
-            if (selectedIds.length === 0) {
-                vscode.window.showInformationMessage('No IDs selected.');
-                return;
-            }
-
-            RunPythonCommand('get', [workspacePath, ...selectedIds, '--degree', '2'], 'CodeTide: Add IDs to Copilot Context (Deep)', async (output) => {
-                const doc = await vscode.workspace.openTextDocument({
-                    content: output.trim(),
-                    language: 'plaintext'
-                });
-                await vscode.window.showTextDocument(doc);
-                vscode.window.showInformationMessage(`[CodeTide] Added ${selectedIds.length} ID(s) to Copilot context (deep).`);
-            });
-        } catch (error) {
-            vscode.window.showErrorMessage(`Error selecting IDs: ${error}`);
-        }
-    }));
-
-        // Tree View command (basic)
+    // Tree View command (basic)
     context.subscriptions.push(vscode.commands.registerCommand('extension.getTreeView', async () => {
         const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (!workspacePath) {
@@ -320,10 +234,6 @@ function initializeExtension(context: vscode.ExtensionContext) {
     }));
 }
 
-/**
- * Get the Python environment manager instance
- * This can be used by other modules that need access to Python paths
- */
 export function getPythonEnvironmentManager(): PythonEnvironmentManager {
     return pythonEnvManager;
 }
