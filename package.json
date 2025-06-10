@@ -29,53 +29,81 @@
     "onStartupFinished"
   ],
   "contributes": {
-      "commands": [
-          {
-              "command": "extension.runParser",
-              "title": "CodeTide: Initialize Project"
-          },
-          {
-              "command": "extension.getByIds",
-              "title": "CodeTide: Get by IDs"
-          },
-          {
-              "command": "extension.getByIdsShallow",
-              "title": "CodeTide: Get by IDs (Shallow)"
-          },
-          {
-              "command": "extension.getByIdsDeep",
-              "title": "CodeTide: Get by IDs (Deep)"
-          },
-          {
-              "command": "extension.getTreeView",
-              "title": "CodeTide: Get Tree View"
-          },
-          {
-              "command": "extension.getTreeViewModules",
-              "title": "CodeTide: Get Tree View (with Modules)"
-          },
-          {
-              "command": "extension.getTreeViewModulesAnnotated",
-              "title": "CodeTide: Get Tree View (with Modules & Types)"
-          },
-          {
-              "command": "extension.refresh",
-              "title": "CodeTide: Refresh the project"
-          },
-          {
-              "command": "extension.reinstallPythonEnv",
-              "title": "CodeTide: Reinstall Python Environment"
-          },
-          {
-              "command": "extension.updatePythonDependencies",
-              "title": "CodeTide: Update Python Dependencies"
-          },
-          {
-              "command": "extension.checkPythonEnv",
-              "title": "CodeTide: Check Python Environment Status"
-          }
-      ]
-  },
+    "commands": [
+        {
+            "command": "extension.runParser",
+            "title": "CodeTide: Initialize Project"
+        },
+        {
+            "command": "extension.getByIds",
+            "title": "CodeTide: Get by IDs (Add to Copilot)"
+        },
+        {
+            "command": "extension.getByIdsClipboard",
+            "title": "CodeTide: Get by IDs (Copy to Clipboard)"
+        },
+        {
+            "command": "extension.getByIdsShallow",
+            "title": "CodeTide: Get by IDs - Shallow (Add to Copilot)"
+        },
+        {
+            "command": "extension.getByIdsShallowClipboard",
+            "title": "CodeTide: Get by IDs - Shallow (Copy to Clipboard)"
+        },
+        {
+            "command": "extension.getByIdsDeep",
+            "title": "CodeTide: Get by IDs - Deep (Add to Copilot)"
+        },
+        {
+            "command": "extension.getByIdsDeepClipboard",
+            "title": "CodeTide: Get by IDs - Deep (Copy to Clipboard)"
+        },
+        {
+            "command": "extension.getTreeView",
+            "title": "CodeTide: Get Tree View (Add to Copilot)"
+        },
+        {
+            "command": "extension.getTreeViewClipboard",
+            "title": "CodeTide: Get Tree View (Copy to Clipboard)"
+        },
+        {
+            "command": "extension.getTreeViewModules",
+            "title": "CodeTide: Get Tree View - with Modules (Add to Copilot)"
+        },
+        {
+            "command": "extension.getTreeViewModulesClipboard",
+            "title": "CodeTide: Get Tree View - with Modules (Copy to Clipboard)"
+        },
+        {
+            "command": "extension.getTreeViewModulesAnnotated",
+            "title": "CodeTide: Get Tree View - with Modules & Types (Add to Copilot)"
+        },
+        {
+            "command": "extension.getTreeViewModulesAnnotatedClipboard",
+            "title": "CodeTide: Get Tree View - with Modules & Types (Copy to Clipboard)"
+        },
+        {
+            "command": "extension.parseFile",
+            "title": "CodeTide: Parse Current File"
+        },
+        {
+            "command": "extension.refresh",
+            "title": "CodeTide: Refresh the project"
+        },
+        {
+            "command": "extension.reinstallPythonEnv",
+            "title": "CodeTide: Reinstall Python Environment"
+        },
+        {
+            "command": "extension.updatePythonDependencies",
+            "title": "CodeTide: Update Python Dependencies"
+        },
+        {
+            "command": "extension.checkPythonEnv",
+            "title": "CodeTide: Check Python Environment Status"
+        }
+    ]
+      },
   "scripts": {
     "vscode:prepublish": "npm run package",
     "compile": "webpack",

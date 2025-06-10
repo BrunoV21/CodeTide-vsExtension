@@ -1,7 +1,6 @@
 import { FuzzyAutocomplete } from './fuzzyAutoComplete';
 import { RunPythonCommand } from './runPythonCommand';
 import { PythonEnvironmentManager } from './pythonEnvironmentManager';
-
 import * as vscode from 'vscode';
 
 let pythonEnvManager: PythonEnvironmentManager;
@@ -12,7 +11,7 @@ export async function activate(context: vscode.ExtensionContext) {
         const extensionId = 'your.publisher.codetide'; // Replace with your actual extension ID
         pythonEnvManager = new PythonEnvironmentManager(context, extensionId);
         
-        // Check Python installation and setup virtual environment (only creates if needed)
+        // Check Python installation and setup virtual environment
         await pythonEnvManager.setupPythonEnvironment();
         
         // Register Python environment management commands
@@ -37,49 +36,40 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 function initializeExtension(context: vscode.ExtensionContext) {
-    // Create fuzzy autocomplete instance
     const fuzzyAutocomplete = new FuzzyAutocomplete();
+
+    // Helper function to get workspace path with error handling
+    const getWorkspacePath = (): string | null => {
+        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (!workspacePath) {
+            vscode.window.showErrorMessage("No workspace is open.");
+            return null;
+        }
+        return workspacePath;
+    };
 
     // Project parser command
     context.subscriptions.push(vscode.commands.registerCommand('extension.runParser', () => {
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        if (!workspacePath) {
-            vscode.window.showErrorMessage("No workspace is open.");
-            return;
-        }
-
+        const workspacePath = getWorkspacePath();
+        if (!workspacePath) return;
         RunPythonCommand('project', [workspacePath], 'CodeTide: Initialize Project');
     }));
 
-    // Get by IDs command with fuzzy autocomplete
+    // ============== Original Document-Opening Commands ==============
+
+    // Get by IDs (Open Document)
     context.subscriptions.push(vscode.commands.registerCommand('extension.getByIds', async () => {
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        if (!workspacePath) {
-            vscode.window.showErrorMessage("No workspace is open.");
-            return;
-        }
+        const workspacePath = getWorkspacePath();
+        if (!workspacePath) return;
 
         try {
             const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
-
-            if (selectedIds === null) {
-                // Special case - no cached IDs found, run project initialization
-                RunPythonCommand('project', [workspacePath], 'CodeTide: Initialize Project');
-                return;
-            }
-
-            if (selectedIds.length === 0) {
+            if (selectedIds?.length === 0) {
                 vscode.window.showInformationMessage('No IDs selected.');
                 return;
             }
 
-            const preview = selectedIds.length > 3
-                ? `${selectedIds.slice(0, 3).join(', ')}... (+${selectedIds.length - 3} more)`
-                : selectedIds.join(', ');
-
-            vscode.window.showInformationMessage(`Selected ${selectedIds.length} ID(s): ${preview}`);
-
-            RunPythonCommand('get', [workspacePath, ...selectedIds], 'Getting Code Snippets...', async (output) => {
+            RunPythonCommand('get', [workspacePath, ...selectedIds], 'CodeTide: Getting Code Snippets...', async (output) => {
                 const doc = await vscode.workspace.openTextDocument({
                     content: output,
                     language: 'plaintext'
@@ -91,17 +81,14 @@ function initializeExtension(context: vscode.ExtensionContext) {
         }
     }));
 
-    // Get by IDs (Shallow)
+    // Get by IDs Shallow (Open Document)
     context.subscriptions.push(vscode.commands.registerCommand('extension.getByIdsShallow', async () => {
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        if (!workspacePath) {
-            vscode.window.showErrorMessage("No workspace is open.");
-            return;
-        }
-        
+        const workspacePath = getWorkspacePath();
+        if (!workspacePath) return;
+
         try {
             const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
-            if (selectedIds.length === 0) {
+            if (selectedIds?.length === 0) {
                 vscode.window.showInformationMessage('No IDs selected.');
                 return;
             }
@@ -118,17 +105,14 @@ function initializeExtension(context: vscode.ExtensionContext) {
         }
     }));
 
-    // Get by IDs (Deep)
+    // Get by IDs Deep (Open Document)
     context.subscriptions.push(vscode.commands.registerCommand('extension.getByIdsDeep', async () => {
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        if (!workspacePath) {
-            vscode.window.showErrorMessage("No workspace is open.");
-            return;
-        }
-        
+        const workspacePath = getWorkspacePath();
+        if (!workspacePath) return;
+
         try {
             const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
-            if (selectedIds.length === 0) {
+            if (selectedIds?.length === 0) {
                 vscode.window.showInformationMessage('No IDs selected.');
                 return;
             }
@@ -145,74 +129,122 @@ function initializeExtension(context: vscode.ExtensionContext) {
         }
     }));
 
-    // Tree View command (basic)
-    context.subscriptions.push(vscode.commands.registerCommand('extension.getTreeView', async () => {
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        if (!workspacePath) {
-            vscode.window.showErrorMessage("No workspace is open.");
-            return;
-        }
+    // Tree View commands (Open Document)
+    const registerTreeViewCommand = (commandName: string, args: string[], title: string) => {
+        context.subscriptions.push(vscode.commands.registerCommand(commandName, async () => {
+            const workspacePath = getWorkspacePath();
+            if (!workspacePath) return;
+
+            try {
+                RunPythonCommand('tree', [workspacePath, ...args], title, async (output) => {
+                    const doc = await vscode.workspace.openTextDocument({
+                        content: output,
+                        language: 'plaintext'
+                    });
+                    vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+                });
+            } catch (error) {
+                vscode.window.showErrorMessage(`Error generating tree view: ${error}`);
+            }
+        }));
+    };
+
+    registerTreeViewCommand('extension.getTreeView', [], 'CodeTide: Generating Tree View...');
+    registerTreeViewCommand('extension.getTreeViewModules', ['--include-modules'], 'CodeTide: Generating Tree View (with Modules)...');
+    registerTreeViewCommand('extension.getTreeViewModulesAnnotated', ['--include-modules', '--include-types'], 'CodeTide: Generating Tree View (with Modules & Types)...');
+
+    // ============== New Clipboard Commands ==============
+
+    // Get by IDs (Clipboard)
+    context.subscriptions.push(vscode.commands.registerCommand('extension.getByIdsClipboard', async () => {
+        const workspacePath = getWorkspacePath();
+        if (!workspacePath) return;
 
         try {
-            RunPythonCommand('tree', [workspacePath], 'CodeTide: Generating Tree View...', async (output) => {
-                const doc = await vscode.workspace.openTextDocument({
-                    content: output,
-                    language: 'plaintext'
-                });
-                vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+            const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
+            if (selectedIds?.length === 0) {
+                vscode.window.showInformationMessage('No IDs selected.');
+                return;
+            }
+
+            RunPythonCommand('get', [workspacePath, ...selectedIds], 'CodeTide: Getting Code Snippets...', async (output) => {
+                await vscode.env.clipboard.writeText(output);
+                vscode.window.showInformationMessage('Output copied to clipboard!');
             });
         } catch (error) {
-            vscode.window.showErrorMessage(`Error generating tree view: ${error}`);
+            vscode.window.showErrorMessage(`Error selecting IDs: ${error}`);
         }
     }));
 
-    // Tree View with Modules command
-    context.subscriptions.push(vscode.commands.registerCommand('extension.getTreeViewModules', async () => {
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        if (!workspacePath) {
-            vscode.window.showErrorMessage("No workspace is open.");
-            return;
-        }
+    // Get by IDs Shallow (Clipboard)
+    context.subscriptions.push(vscode.commands.registerCommand('extension.getByIdsShallowClipboard', async () => {
+        const workspacePath = getWorkspacePath();
+        if (!workspacePath) return;
 
         try {
-            RunPythonCommand('tree', [workspacePath, '--include-modules'], 'CodeTide: Generating Tree View (with Modules)...', async (output) => {
-                const doc = await vscode.workspace.openTextDocument({
-                    content: output,
-                    language: 'plaintext'
-                });
-                vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+            const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
+            if (selectedIds?.length === 0) {
+                vscode.window.showInformationMessage('No IDs selected.');
+                return;
+            }
+
+            RunPythonCommand('get', [workspacePath, ...selectedIds, '--degree', '0'], 'CodeTide: Get by IDs (Shallow)', async (output) => {
+                await vscode.env.clipboard.writeText(output);
+                vscode.window.showInformationMessage('Output copied to clipboard!');
             });
         } catch (error) {
-            vscode.window.showErrorMessage(`Error generating tree view: ${error}`);
+            vscode.window.showErrorMessage(`Error selecting IDs: ${error}`);
         }
     }));
 
-    // Tree View with Modules and Types command
-    context.subscriptions.push(vscode.commands.registerCommand('extension.getTreeViewModulesAnnotated', async () => {
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        if (!workspacePath) {
-            vscode.window.showErrorMessage("No workspace is open.");
-            return;
-        }
+    // Get by IDs Deep (Clipboard)
+    context.subscriptions.push(vscode.commands.registerCommand('extension.getByIdsDeepClipboard', async () => {
+        const workspacePath = getWorkspacePath();
+        if (!workspacePath) return;
 
         try {
-            RunPythonCommand('tree', [workspacePath, '--include-modules', '--include-types'], 'CodeTide: Generating Tree View (with Modules & Types)...', async (output) => {
-                const doc = await vscode.workspace.openTextDocument({
-                    content: output,
-                    language: 'plaintext'
-                });
-                vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+            const selectedIds = await fuzzyAutocomplete.showFuzzyIdPicker(workspacePath);
+            if (selectedIds?.length === 0) {
+                vscode.window.showInformationMessage('No IDs selected.');
+                return;
+            }
+
+            RunPythonCommand('get', [workspacePath, ...selectedIds, '--degree', '2'], 'CodeTide: Get by IDs (Deep)', async (output) => {
+                await vscode.env.clipboard.writeText(output);
+                vscode.window.showInformationMessage('Output copied to clipboard!');
             });
         } catch (error) {
-            vscode.window.showErrorMessage(`Error generating tree view: ${error}`);
+            vscode.window.showErrorMessage(`Error selecting IDs: ${error}`);
         }
     }));
+
+    // Tree View commands (Clipboard)
+    const registerTreeViewClipboardCommand = (commandName: string, args: string[], title: string) => {
+        context.subscriptions.push(vscode.commands.registerCommand(commandName, async () => {
+            const workspacePath = getWorkspacePath();
+            if (!workspacePath) return;
+
+            try {
+                RunPythonCommand('tree', [workspacePath, ...args], title, async (output) => {
+                    await vscode.env.clipboard.writeText(output);
+                    vscode.window.showInformationMessage('Tree view copied to clipboard!');
+                });
+            } catch (error) {
+                vscode.window.showErrorMessage(`Error generating tree view: ${error}`);
+            }
+        }));
+    };
+
+    registerTreeViewClipboardCommand('extension.getTreeViewClipboard', [], 'CodeTide: Generating Tree View...');
+    registerTreeViewClipboardCommand('extension.getTreeViewModulesClipboard', ['--include-modules'], 'CodeTide: Generating Tree View (with Modules)...');
+    registerTreeViewClipboardCommand('extension.getTreeViewModulesAnnotatedClipboard', ['--include-modules', '--include-types'], 'CodeTide: Generating Tree View (with Modules & Types)...');
+
+    // ============== Other Commands ==============
 
     // Parse specific file
     context.subscriptions.push(vscode.commands.registerCommand('extension.parseFile', () => {
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        const workspacePath = getWorkspacePath();
         const editor = vscode.window.activeTextEditor;
-
         if (!workspacePath || !editor) {
             vscode.window.showErrorMessage("Workspace or editor not available.");
             return;
@@ -224,12 +256,8 @@ function initializeExtension(context: vscode.ExtensionContext) {
 
     // Refresh command
     context.subscriptions.push(vscode.commands.registerCommand('extension.refresh', () => {
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        if (!workspacePath) {
-            vscode.window.showErrorMessage("No workspace is open.");
-            return;
-        }
-        
+        const workspacePath = getWorkspacePath();
+        if (!workspacePath) return;
         RunPythonCommand('refresh', [workspacePath]);
     }));
 }
