@@ -3,7 +3,7 @@
 	"publisher": "BrunoV21",
   "displayName": "CodeTide",
   "description": "Get just the right context for your favourite LLMs!",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "icon": "assets/codetide-logo.png",
   "engines": {
     "vscode": "^1.100.0"
