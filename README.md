@@ -3,7 +3,9 @@
 
 **CodeTide** is an intelligent code context manager that helps developers extract, organize, and retrieve the perfect code snippets for LLM-assisted workflows in Visual Studio Code. It automatically parses and indexes your entire codebase, providing flexible context generation for GitHub Copilot and other AI coding assistants.
 
-![CodeTide in Action](assets/codetide-demo.gif) *(Example GIF showing context selection and Copilot integration)*
+![CodeTide in Action](https://github.com/BrunoV21/codetide-vsExtension/raw/main/assets/codetide-demo.gif)
+
+*(Example GIF showing context selection and Copilot integration)*
 
 ## Key Features
 
