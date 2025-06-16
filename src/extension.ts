@@ -55,7 +55,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
         RunPythonCommand('project', [workspacePath], 'CodeTide: Initialize Project');
     }));
 
-    // ============== Original Document-Opening Commands ==============
+    // ============== Document-Opening Commands ==============
 
     // Get by IDs (Open Document)
     context.subscriptions.push(vscode.commands.registerCommand('extension.getByIds', async () => {
@@ -74,7 +74,12 @@ function initializeExtension(context: vscode.ExtensionContext) {
                     content: output,
                     language: 'plaintext'
                 });
-                vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+                const editor = await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+                
+                // Add the document to Copilot context
+                if (await vscode.commands.getCommands().then(commands => commands.includes('github.copilot.addContext'))) {
+                    await vscode.commands.executeCommand('github.copilot.addContext', editor.document.uri);
+                }
             });
         } catch (error) {
             vscode.window.showErrorMessage(`Error selecting IDs: ${error}`);
@@ -98,7 +103,12 @@ function initializeExtension(context: vscode.ExtensionContext) {
                     content: output,
                     language: 'plaintext'
                 });
-                vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+                const editor = await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+                
+                // Add the document to Copilot context
+                if (await vscode.commands.getCommands().then(commands => commands.includes('github.copilot.addContext'))) {
+                    await vscode.commands.executeCommand('github.copilot.addContext', editor.document.uri);
+                }
             });
         } catch (error) {
             vscode.window.showErrorMessage(`Error selecting IDs: ${error}`);
@@ -122,7 +132,12 @@ function initializeExtension(context: vscode.ExtensionContext) {
                     content: output,
                     language: 'plaintext'
                 });
-                vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+                const editor = await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+                
+                // Add the document to Copilot context
+                if (await vscode.commands.getCommands().then(commands => commands.includes('github.copilot.addContext'))) {
+                    await vscode.commands.executeCommand('github.copilot.addContext', editor.document.uri);
+                }
             });
         } catch (error) {
             vscode.window.showErrorMessage(`Error selecting IDs: ${error}`);
@@ -141,7 +156,12 @@ function initializeExtension(context: vscode.ExtensionContext) {
                         content: output,
                         language: 'plaintext'
                     });
-                    vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+                    const editor = await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+                
+                    // Add the document to Copilot context
+                    if (await vscode.commands.getCommands().then(commands => commands.includes('github.copilot.addContext'))) {
+                        await vscode.commands.executeCommand('github.copilot.addContext', editor.document.uri);
+                    }
                 });
             } catch (error) {
                 vscode.window.showErrorMessage(`Error generating tree view: ${error}`);
@@ -153,7 +173,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
     registerTreeViewCommand('extension.getTreeViewModules', ['--include-modules'], 'CodeTide: Generating Tree View (with Modules)...');
     registerTreeViewCommand('extension.getTreeViewModulesAnnotated', ['--include-modules', '--include-types'], 'CodeTide: Generating Tree View (with Modules & Types)...');
 
-    // ============== New Clipboard Commands ==============
+    // ============== Clipboard Commands ==============
 
     // Get by IDs (Clipboard)
     context.subscriptions.push(vscode.commands.registerCommand('extension.getByIdsClipboard', async () => {
