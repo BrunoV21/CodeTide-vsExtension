@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  codetide:
+    build: .
+    container_name: codetide-dev
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules  # Prevent host node_modules overwrite
+    working_dir: /workspace
+    tty: true
+    stdin_open: true
+    environment:
+      - NODE_ENV=development
+      - PYTHONUNBUFFERED=1
+      - VSCODE_EXTENSION_PATH=/workspace
+    ports:
+      - 9229:9229  # Node.js debug port
+    command: bash -c "npm install && npm run compile && tail -f /dev/null"  # Keep container running
+
+  tests:
+    build: .
+    container_name: codetide-tests
+    working_dir: /workspace
+    environment:
+      - NODE_ENV=test
+    command: npm test
+    depends_on:
+      - codetide

@@ -1,4 +1,3 @@
-
 # CodeTide VS Code Extension
 
 **CodeTide** is an intelligent code context manager that helps developers extract, organize, and retrieve the perfect code snippets for LLM-assisted workflows in Visual Studio Code. It automatically parses and indexes your entire codebase, providing flexible context generation for GitHub Copilot and other AI coding assistants.
@@ -21,18 +20,36 @@
 ### Prerequisites
 - [Python 3.8+](https://www.python.org/downloads/) installed and in your PATH
 - [VS Code](https://code.visualstudio.com/) 1.100.0 or later
+- [Docker](https://www.docker.com/) 20.10+ (optional, for containerized development)
 
-### Steps
+### Installation Options
+
+#### Option 1: VS Code Marketplace
 1. Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=BrunoV21.codetide)
 2. Open a project in VS Code
 3. On first run, the extension will automatically:
    - Set up a Python virtual environment
    - Install required dependencies (including `codetide` backend)
-   
-*Manual installation option:*
+
+#### Option 2: Manual Installation
 ```bash
 pip install git+https://github.com/BrunoV21/codetide
 ```
+
+#### Option 3: Docker Development Environment
+For containerized development:
+1. Build the Docker image:
+   ```bash
+   docker-compose build
+   ```
+2. Start the development container:
+   ```bash
+   docker-compose run --service-ports codetide
+   ```
+3. Inside the container:
+   - Install dependencies: `npm install`
+   - Build the extension: `npm run compile`
+   - Run tests: `npm test`
 
 ## Usage
 
@@ -81,11 +98,14 @@ pip install git+https://github.com/BrunoV21/codetide
 - **Backend**: Requires [codetide Python package](https://github.com/BrunoV21/codetide)
 - **System**: Python 3.8+ must be installed and accessible
 - **Permissions**: Needs read access to your project files
+- **Docker**: Docker 20.10+ required for containerized development
+  - Docker Desktop for [Windows/Mac](https://www.docker.com/products/docker-desktop) or [Linux](https://docs.docker.com/engine/install/)
 
 ## Troubleshooting
 - **Python not found**: Ensure Python is in your PATH or reinstall it
 - **Missing dependencies**: Run `CodeTide: Reinstall Python Environment`
 - **Cached IDs not updating**: Use `CodeTide: Refresh the project`
+- **Docker issues**: Make sure Docker is running and you have sufficient permissions
 
 ## Contributing
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
