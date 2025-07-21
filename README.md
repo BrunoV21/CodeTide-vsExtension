@@ -5,8 +5,6 @@
 
 ![CodeTide in Action](https://raw.githubusercontent.com/BrunoV21/CodeTide-vsExtension/main/assets/codetide-demo.gif)
 
-*(Example GIF showing context selection and Copilot integration)*
-
 ## Key Features
 
 - **Automatic Codebase Parsing** - Intelligently indexes your entire project structure
