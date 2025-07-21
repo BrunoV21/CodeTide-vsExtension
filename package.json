@@ -22,7 +22,6 @@
   "main": "./dist/extension.js",
   "files": [
     "dist",
-    "python",
     "assets"
   ],
   "activationEvents": [
